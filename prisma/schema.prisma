@@ -1,0 +1,187 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int          @id @default(autoincrement())
+  name        String
+  email       String       @unique
+  username    String       @unique
+  password    String
+  address     Address?
+  tasks       Task[] // (owner/creator se você usar)
+  teamMembers TeamMember[]
+
+  reportedTasks Task[] @relation("TaskReporter")
+  assignedTasks Task[] @relation("TaskAssignee")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id           Int    @id @default(autoincrement())
+  street       String
+  city         String
+  state        String
+  zipCode      String
+  neighborhood String
+  number       Int
+  userId       Int    @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Team {
+  id         Int          @id @default(autoincrement())
+  name       String
+  members    TeamMember[]
+  workspaces Workspace[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TeamMember {
+  id     Int  @id @default(autoincrement())
+  userId Int
+  teamId Int
+  user   User @relation(fields: [userId], references: [id])
+  team   Team @relation(fields: [teamId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, userId])
+  @@index([userId])
+}
+
+model Workspace {
+  id          Int             @id @default(autoincrement())
+  name        String
+  prefix      String          @unique
+  taskSeq     Int             @default(0)
+  methodology String
+  steps       WorkspaceStep[]
+  sprints     Sprint[]
+  teamId      Int
+  team        Team            @relation(fields: [teamId], references: [id])
+  tasks       Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WorkspaceStep {
+  id          Int       @id @default(autoincrement())
+  order       Int
+  workspaceId Int
+  stepId      Int
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  step        Step      @relation(fields: [stepId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, stepId])
+  @@unique([workspaceId, order])
+  @@index([workspaceId])
+  @@index([stepId])
+}
+
+model Step {
+  id             Int             @id @default(autoincrement())
+  name           String
+  workspaceSteps WorkspaceStep[]
+  tasks          Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Sprint {
+  id          Int       @id @default(autoincrement())
+  name        String
+  startDate   DateTime
+  endDate     DateTime
+  isActive    Boolean   @default(false)
+  workspaceId Int
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+  tasks       Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, isActive])
+}
+
+model Task {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String?
+  status      String
+
+  userId     Int
+  sprintId   Int?
+  stepId     Int
+  priorityId Int
+  typeTaskId Int
+
+  reporterId Int
+  assigneeId Int?
+  startDate  DateTime?
+  deadline   DateTime?
+  estimate   String?
+
+  workspaceId    Int
+  workspace      Workspace @relation(fields: [workspaceId], references: [id])
+  sequenceNumber Int
+
+  user     User     @relation(fields: [userId], references: [id])
+  reporter User     @relation("TaskReporter", fields: [reporterId], references: [id])
+  assignee User?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  sprint   Sprint?  @relation(fields: [sprintId], references: [id])
+  step     Step     @relation(fields: [stepId], references: [id])
+  priority Priority @relation(fields: [priorityId], references: [id])
+  typeTask TypeTask @relation(fields: [typeTaskId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([workspaceId, sequenceNumber])
+  @@index([stepId])
+  @@index([sprintId])
+  @@index([priorityId])
+  @@index([typeTaskId])
+  @@index([reporterId])
+  @@index([assigneeId])
+  @@index([workspaceId])
+}
+
+model Priority {
+  id      Int     @id @default(autoincrement())
+  label   String
+  name    String
+  deleted Boolean @default(false)
+  tasks   Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TypeTask {
+  id    Int    @id @default(autoincrement())
+  name  String
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
