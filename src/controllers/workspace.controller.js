@@ -10,6 +10,15 @@ module.exports = {
 		}
 	},
 
+	async getAllowedForUser(req, res) {
+		try {
+			const data = await service.getAllowedForUser(req.user.id);
+			res.json(data);
+		} catch (error) {
+			res.status(500).json({ message: 'Erro ao buscar workspaces do usuário', error: String(error) });
+		}
+	},
+
 	async getById(req, res) {
 		try {
 			const data = await service.getById(req.params.id);

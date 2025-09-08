@@ -1,6 +1,9 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
 const app = express();
+
 const userRoutes = require('./routes/user.routes');
 const teamRoutes = require('./routes/team.routes');
 const teamMemberRoutes = require('./routes/teamMember.routes');
@@ -10,10 +13,16 @@ const taskTypeRoutes = require('./routes/typeTask.routes');
 const workspaceRoutes = require('./routes/workspace.routes');
 const taskRoutes = require('./routes/task.routes');
 const sprintRoutes = require('./routes/sprint.routes');
+const epicRoutes = require('./routes/epic.routes');
+const authRoutes = require('./routes/auth.routes');
 
 require('dotenv').config();
-app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
+app.use(cors({
+  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  credentials: true,
+}));
 
 app.use('/users', userRoutes);
 
@@ -32,6 +41,10 @@ app.use('/workspaces', workspaceRoutes);
 app.use('/tasks', taskRoutes);
 
 app.use('/sprints', sprintRoutes);
+
+app.use('/epics', epicRoutes);
+
+app.use('/auth', authRoutes);
 
 app.get('/', (req, res) => {
   res.send('API funcionando ✅');

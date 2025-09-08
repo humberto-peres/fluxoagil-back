@@ -1,12 +1,12 @@
 const service = require('../services/sprint.service');
-const { formatSPDateTime } = require('../utils/datetime');
+const { formatSPDateTime, formatSPDate } = require('../utils/datetime');
 
 function serializeSprint(s) {
   if (!s) return s;
   return {
     ...s,
-    startDate: formatSPDateTime(s.startDate),
-    endDate: formatSPDateTime(s.endDate),
+    startDate: formatSPDate(s.startDate),
+    endDate: formatSPDate(s.endDate),
     createdAt: formatSPDateTime(s.createdAt),
     updatedAt: formatSPDateTime(s.updatedAt),
   };

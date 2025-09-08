@@ -7,7 +7,7 @@ function serializeTask(t) {
 
   return {
     ...t,
-    idTask: `${t.workspace.prefix}-${t.sequenceNumber}`,
+    idTask: t.idTask,
     createdAt: formatSPDateTime(t.createdAt),
     updatedAt: formatSPDateTime(t.updatedAt),
     startDate: formatSPDateTime(t.startDate),
@@ -79,7 +79,8 @@ module.exports = {
       await service.removeMany(ids || []);
       res.json({ message: "Removida(s) com sucesso!" });
     } catch (e) {
-      res.status(400).json({ message: e?.message || "Erro ao remover tarefas" });
+      const code = e.statusCode || 400;
+      res.status(code).json({ message: e?.message || "Erro ao remover tarefas" });
     }
   },
 
