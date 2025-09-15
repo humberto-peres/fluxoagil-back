@@ -1,23 +1,173 @@
 const { PrismaClient } = require("@prisma/client");
+const bcrypt = require("bcryptjs");
 const prisma = new PrismaClient();
 
+const userSelectPublic = {
+  id: true,
+  name: true,
+  email: true,
+  username: true,
+  role: true,
+  address: {
+    select: {
+      id: true,
+      street: true,
+      city: true,
+      state: true,
+      zipCode: true,
+      neighborhood: true,
+      number: true,
+    },
+  },
+};
+
+function splitAndNormalize(data = {}) {
+  const {
+    name,
+    email,
+    username,
+    password,
+    role,
+    cep,
+    zipCode,
+    state,
+    city,
+    street,
+    neighborhood,
+    number,
+  } = data;
+
+  const userData = {
+    name,
+    email,
+    username,
+    password,
+    role,
+  };
+
+  const addressDataRaw = {
+    street,
+    city,
+    state,
+    neighborhood,
+    zipCode: zipCode || cep,
+    number: number != null ? Number(number) : undefined,
+  };
+
+  const addressData = Object.fromEntries(
+    Object.entries(addressDataRaw).filter(([, v]) => v !== undefined && v !== null && v !== "")
+  );
+
+  return { userData, addressData };
+}
+
+function isAddressComplete(addr) {
+  if (!addr) return false;
+  const required = ["street", "city", "state", "zipCode", "neighborhood", "number"];
+  return required.every((k) => addr[k] !== undefined && addr[k] !== null && addr[k] !== "");
+}
+
+function mapPrismaError(err) {
+  if (err && err.code === "P2002") {
+    const fields = Array.isArray(err.meta?.target) ? err.meta.target.join(", ") : String(err.meta?.target || "");
+    const e = new Error(`Violação de unicidade em: ${fields || "campo único"}.`);
+    e.status = 409;
+    return e;
+  }
+  return err;
+}
+
 module.exports = {
-	getAll: () =>
-		prisma.user.findMany({
-			include: { address: true },
-		}),
+  async getAll() {
+    return prisma.user.findMany({ select: userSelectPublic });
+  },
 
-	getById: (id) => prisma.user.findUnique({ where: { id } }),
+  async getById(id) {
+    return prisma.user.findUnique({
+      where: { id },
+      select: userSelectPublic,
+    });
+  },
 
-	create: (data) => prisma.user.create({ data }),
+  async create(data) {
+    const { userData, addressData } = splitAndNormalize(data);
 
-	update: (id, data) => prisma.user.update({ where: { id }, data }),
+    if (!userData.password || String(userData.password).length < 6) {
+      const e = new Error("Senha obrigatória com no mínimo 6 caracteres.");
+      e.status = 400;
+      throw e;
+    }
 
-	removeMany: async (ids) => {
-		return prisma.user.deleteMany({
-			where: {
-				id: { in: ids },
-			},
-		});
-	},
+    const passwordHash = await bcrypt.hash(String(userData.password), 10);
+
+    const createData = {
+      name: userData.name,
+      email: userData.email,
+      username: userData.username,
+      role: userData.role,
+      password: passwordHash,
+    };
+
+    if (isAddressComplete(addressData)) {
+      createData.address = { create: addressData };
+    }
+
+    try {
+      return await prisma.user.create({
+        data: createData,
+        select: userSelectPublic,
+      });
+    } catch (err) {
+      throw mapPrismaError(err);
+    }
+  },
+
+  async update(id, data) {
+    const { userData, addressData } = splitAndNormalize(data);
+
+    const toUpdate = {
+      name: userData.name,
+      email: userData.email,
+      username: userData.username,
+      role: userData.role,
+    };
+
+    if (typeof userData.password === "string" && userData.password.trim() !== "") {
+      if (userData.password.length < 6) {
+        const e = new Error("Senha deve ter no mínimo 6 caracteres.");
+        e.status = 400;
+        throw e;
+      }
+      toUpdate.password = await bcrypt.hash(String(userData.password), 10);
+    }
+
+    const addressMutation = isAddressComplete(addressData)
+      ? {
+          address: {
+            upsert: {
+              create: addressData,
+              update: addressData,
+            },
+          },
+        }
+      : {};
+    try {
+      return await prisma.user.update({
+        where: { id },
+        data: {
+          ...toUpdate,
+          ...addressMutation,
+        },
+        select: userSelectPublic,
+      });
+    } catch (err) {
+      throw mapPrismaError(err);
+    }
+  },
+
+  async removeMany(ids) {
+    return prisma.user.deleteMany({
+      where: { id: { in: ids } },
+    });
+  },
 };

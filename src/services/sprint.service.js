@@ -9,7 +9,6 @@ async function ensureWorkspaceExists(workspaceId) {
 }
 
 module.exports = {
-  // filtros: workspaceId?, isActive?
   getAll: async ({ workspaceId, isActive } = {}) => {
     return prisma.sprint.findMany({
       where: {
@@ -59,7 +58,6 @@ module.exports = {
       isActive: data.isActive === undefined ? undefined : Boolean(data.isActive),
     };
 
-    // se for ativar, garanta unicidade e datas
     if (patch.isActive === true) {
       const start = patch.startDate ?? current.startDate;
       const end = patch.endDate ?? current.endDate;

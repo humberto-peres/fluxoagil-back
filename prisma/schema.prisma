@@ -8,14 +8,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  admin
+  user
+}
+
 model User {
   id          Int          @id @default(autoincrement())
   name        String
   email       String       @unique
   username    String       @unique
   password    String
+  role        Role         @default(user)
   address     Address?
-  tasks       Task[] // (owner/creator se você usar)
+  tasks       Task[]
   teamMembers TeamMember[]
 
   reportedTasks Task[] @relation("TaskReporter")
@@ -67,17 +73,21 @@ model TeamMember {
 model Workspace {
   id          Int             @id @default(autoincrement())
   name        String
-  prefix      String          @unique
-  taskSeq     Int             @default(0)
   methodology String
   steps       WorkspaceStep[]
   sprints     Sprint[]
   teamId      Int
   team        Team            @relation(fields: [teamId], references: [id])
-  tasks       Task[]
+
+  key         String @unique @db.VarChar(5)
+  nextTaskSeq Int    @default(1)
+  nextEpicSeq Int    @default(1)
+
+  epics Epic[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Task      Task[]
 }
 
 model WorkspaceStep {
@@ -124,26 +134,27 @@ model Sprint {
 }
 
 model Task {
-  id          Int     @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   title       String
   description String?
   status      String
+  userId      Int
+  sprintId    Int?
+  stepId      Int
+  priorityId  Int
+  typeTaskId  Int
+  reporterId  Int
+  assigneeId  Int?
+  startDate   DateTime?
+  deadline    DateTime?
+  estimate    String?
+  idTask      String
+  
+  workspaceId Int
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
-  userId     Int
-  sprintId   Int?
-  stepId     Int
-  priorityId Int
-  typeTaskId Int
-
-  reporterId Int
-  assigneeId Int?
-  startDate  DateTime?
-  deadline   DateTime?
-  estimate   String?
-
-  workspaceId    Int
-  workspace      Workspace @relation(fields: [workspaceId], references: [id])
-  sequenceNumber Int
+  epicId Int?
+  epic   Epic? @relation(fields: [epicId], references: [id], onDelete: SetNull)
 
   user     User     @relation(fields: [userId], references: [id])
   reporter User     @relation("TaskReporter", fields: [reporterId], references: [id])
@@ -156,7 +167,6 @@ model Task {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([workspaceId, sequenceNumber])
   @@index([stepId])
   @@index([sprintId])
   @@index([priorityId])
@@ -164,6 +174,30 @@ model Task {
   @@index([reporterId])
   @@index([assigneeId])
   @@index([workspaceId])
+  @@index([epicId])
+}
+
+model Epic {
+  id          Int       @id @default(autoincrement())
+  key         String    @unique
+  title       String
+  description String?
+  status      String    @default("open")
+  startDate   DateTime?
+  targetDate  DateTime?
+
+  priorityId Int?
+  priority   Priority? @relation(fields: [priorityId], references: [id])
+
+  workspaceId Int
+  workspace   Workspace @relation(fields: [workspaceId], references: [id])
+
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workspaceId, status])
 }
 
 model Priority {
@@ -175,6 +209,7 @@ model Priority {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Epic      Epic[]
 }
 
 model TypeTask {

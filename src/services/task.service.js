@@ -10,6 +10,18 @@ async function ensureStepInWorkspace(stepId, workspaceId) {
   if (!link) throw new Error("A etapa informada não pertence ao workspace.");
 }
 
+async function ensureEpicInWorkspace(epicId, workspaceId) {
+  if (!epicId) return;
+  const epic = await prisma.epic.findUnique({
+    where: { id: Number(epicId) },
+    select: { id: true, workspaceId: true },
+  });
+  if (!epic) throw new Error("Épico inexistente.");
+  if (epic.workspaceId !== Number(workspaceId)) {
+    throw new Error("O épico informado pertence a outro workspace.");
+  }
+}
+
 module.exports = {
   getAll: async ({ workspaceId, stepId, sprintId }) => {
     return prisma.task.findMany({
@@ -26,7 +38,8 @@ module.exports = {
         assignee: true,
         step: true,
         sprint: { select: { id: true, workspaceId: true } },
-        workspace: { select: { id: true, prefix: true } },
+        workspace: { select: { id: true, key: true } },
+        epic: { select: { id: true, key: true, title: true } },
       },
       orderBy: { id: "desc" },
     });
@@ -42,7 +55,8 @@ module.exports = {
         assignee: true,
         step: true,
         sprint: { select: { id: true, workspaceId: true } },
-        workspace: { select: { id: true, prefix: true } },
+        workspace: { select: { id: true, key: true } },
+        epic: { select: { id: true, key: true, title: true } },
       },
     });
   },
@@ -62,13 +76,15 @@ module.exports = {
         throw new Error("workspaceId difere do workspace da sprint.");
       }
     }
+
     await ensureStepInWorkspace(stepId, workspaceId);
+    await ensureEpicInWorkspace(data.epicId, workspaceId);
 
     const result = await prisma.$transaction(async (tx) => {
       const ws = await tx.workspace.update({
         where: { id: workspaceId },
-        data: { taskSeq: { increment: 1 } },
-        select: { taskSeq: true },
+        data: { nextTaskSeq: { increment: 1 } },
+        select: { nextTaskSeq: true, key: true },
       });
 
       const payload = {
@@ -86,7 +102,8 @@ module.exports = {
         userId: Number(data.userId),
         status: data.status ?? String(stepId),
         workspaceId,
-        sequenceNumber: ws.taskSeq,
+        idTask: `${ws.key}-${ws.nextTaskSeq}`,
+        epicId: data.epicId ? Number(data.epicId) : null,
       };
 
       const created = await tx.task.create({ data: payload });
@@ -119,7 +136,9 @@ module.exports = {
         throw new Error("workspaceId difere do workspace da sprint.");
       }
     }
+
     await ensureStepInWorkspace(nextStepId, nextWorkspaceId);
+    await ensureEpicInWorkspace(data.epicId ?? null, nextWorkspaceId);
 
     const patch = {
       title: data.title ?? undefined,
@@ -138,6 +157,7 @@ module.exports = {
       userId: data.userId != null ? Number(data.userId) : undefined,
       status: data.status ?? undefined,
       workspaceId: data.workspaceId != null ? nextWorkspaceId : undefined,
+      epicId: data.epicId !== undefined ? (data.epicId ? Number(data.epicId) : null) : undefined,
     };
 
     await prisma.task.update({ where: { id: Number(id) }, data: patch });
@@ -145,7 +165,22 @@ module.exports = {
   },
 
   removeMany: async (ids) => {
-    return prisma.task.deleteMany({ where: { id: { in: ids.map(Number) } } });
+    const taskIds = (ids || []).map(Number);
+    if (!taskIds.length) return { count: 0 };
+
+    const withEpic = await prisma.task.findMany({
+      where: { id: { in: taskIds }, epicId: { not: null } },
+      select: { id: true, idTask: true, epicId: true },
+    });
+
+    if (withEpic.length) {
+      const keys = withEpic.map(t => t.idTask).join(', ');
+      const err = new Error(`Não é possível excluir: ${keys} estão vinculadas a um épico.`);
+      err.statusCode = 409;
+      throw err;
+    }
+
+    return prisma.task.deleteMany({ where: { id: { in: taskIds } } });
   },
 
   move: async (id, stepId) => {
