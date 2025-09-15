@@ -7,6 +7,7 @@ const router = express.Router();
 router.use(authRequired);
 
 router.get('/allowed', controller.getAllowedForUser);
+router.get('/:id/can-access', controller.canAccess);
 
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);

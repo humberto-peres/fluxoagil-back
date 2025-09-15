@@ -19,6 +19,17 @@ module.exports = {
 		}
 	},
 
+	async canAccess(req, res) {
+		const id = Number(req.params.id);
+		const userId = req.user.id;
+		try {
+			const allowed = await service.canAccess(userId, id);
+			res.json({ allowed });
+		} catch (e) {
+			res.status(500).json({ message: 'Erro ao checar acesso' });
+		}
+	},
+
 	async getById(req, res) {
 		try {
 			const data = await service.getById(req.params.id);

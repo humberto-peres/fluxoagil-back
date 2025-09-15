@@ -48,10 +48,26 @@ module.exports = {
 		return data;
 	},
 
+	async canAccess(userId, workspaceId) {
+		const ws = await prisma.workspace.findFirst({
+			where: {
+				id: Number(workspaceId),
+				team: { members: { some: { userId: Number(userId) } } },
+			},
+			select: { id: true },
+		});
+		return !!ws;
+	},
+
 	getById: async (id) => {
 		return prisma.workspace.findUnique({
 			where: { id: Number(id) },
-			include: { steps: true },
+			include: {
+				steps: {
+					include: { step: true },
+					orderBy: { order: "asc" },
+				},
+			},
 		});
 	},
 

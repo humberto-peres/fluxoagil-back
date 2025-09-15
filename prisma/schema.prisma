@@ -88,6 +88,8 @@ model Workspace {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   Task      Task[]
+
+  githubIntegration IntegrationGithub?
 }
 
 model WorkspaceStep {
@@ -120,12 +122,15 @@ model Step {
 model Sprint {
   id          Int       @id @default(autoincrement())
   name        String
-  startDate   DateTime
-  endDate     DateTime
+  startDate   DateTime?
+  endDate     DateTime?
   isActive    Boolean   @default(false)
   workspaceId Int
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
   tasks       Task[]
+
+  activatedAt DateTime?
+  closedAt    DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -149,7 +154,7 @@ model Task {
   deadline    DateTime?
   estimate    String?
   idTask      String
-  
+
   workspaceId Int
   workspace   Workspace @relation(fields: [workspaceId], references: [id])
 
@@ -219,4 +224,37 @@ model TypeTask {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model IntegrationGithub {
+  id              Int      @id @default(autoincrement())
+  workspaceId     Int      @unique
+  repoFullName    String
+  secret          String
+  createdByUserId Int
+  createdAt       DateTime @default(now())
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  rules GithubAutomationRule[]
+}
+
+model GithubAutomationRule {
+  id             Int      @id @default(autoincrement())
+  integrationId  Int
+  event          String
+  conditionsJson Json
+  actionJson     Json
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  integration IntegrationGithub @relation(fields: [integrationId], references: [id], onDelete: Cascade)
+}
+
+model WebhookEventLog {
+  id         Int      @id @default(autoincrement())
+  provider   String
+  deliveryId String   @unique
+  receivedAt DateTime @default(now())
+  handled    Boolean  @default(false)
 }

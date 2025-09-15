@@ -1,6 +1,9 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const bodyParser = require('body-parser');
 
 const app = express();
 
@@ -15,38 +18,40 @@ const taskRoutes = require('./routes/task.routes');
 const sprintRoutes = require('./routes/sprint.routes');
 const epicRoutes = require('./routes/epic.routes');
 const authRoutes = require('./routes/auth.routes');
+const searchRoutes = require('./routes/search.routes');
 
-require('dotenv').config();
-app.use(express.json());
-app.use(cookieParser());
+const integrationsGithubRoutes = require('./routes/integrationsGithub.routes');
+const githubWebhookHandler = require('./routes/github.webhook');
+
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
   credentials: true,
 }));
+app.use(cookieParser());
 
-app.use('/users', userRoutes);
+const githubWebhookJson = bodyParser.json({
+  verify: (req, res, buf) => { req.rawBody = buf; },
+});
+app.post('/integrations/github/webhook', githubWebhookJson, githubWebhookHandler);
 
-app.use('/teams', teamRoutes);
-
-app.use('/team-members', teamMemberRoutes);
-
-app.use('/steps', stepRoutes);
-
-app.use('/priorities', priorityRoutes);
-
-app.use('/task-types', taskTypeRoutes);
-
-app.use('/workspaces', workspaceRoutes);
-
-app.use('/tasks', taskRoutes);
-
-app.use('/sprints', sprintRoutes);
-
-app.use('/epics', epicRoutes);
+app.use(express.json());
 
 app.use('/auth', authRoutes);
+app.use('/users', userRoutes);
+app.use('/teams', teamRoutes);
+app.use('/team-members', teamMemberRoutes);
+app.use('/steps', stepRoutes);
+app.use('/priorities', priorityRoutes);
+app.use('/task-types', taskTypeRoutes);
+app.use('/workspaces', workspaceRoutes);
+app.use('/tasks', taskRoutes);
+app.use('/sprints', sprintRoutes);
+app.use('/epics', epicRoutes);
 
-app.get('/', (req, res) => {
+app.use('/integrations/github', integrationsGithubRoutes);
+app.use(searchRoutes);
+
+app.get('/', (_, res) => {
   res.send('API funcionando ✅');
 });
 
