@@ -20,16 +20,26 @@ router.get('/search', async (req, res, next) => {
 
         const tasksPromise = wantTasks
             ? prisma.task.findMany({
-                where: { title: { contains: q, mode: 'insensitive' } },
-                select: { id: true, title: true, status: true, sprintId: true },
+                where: {
+                    OR: [
+                        { title: { contains: q, mode: 'insensitive' } },
+                        { idTask: { contains: q, mode: 'insensitive' } },
+                    ],
+                },
+                select: { id: true, title: true, status: true, sprintId: true, idTask: true },
                 take: limit,
             })
             : Promise.resolve([]);
 
         const epicsPromise = wantEpics
             ? prisma.epic.findMany({
-                where: { title: { contains: q, mode: 'insensitive' } },
-                select: { id: true, title: true },
+                where: {
+                    OR: [
+                        { title: { contains: q, mode: 'insensitive' } },
+                        { key: { contains: q, mode: 'insensitive' } }, // 👈 busca por key
+                    ],
+                },
+                select: { id: true, title: true, key: true },
                 take: limit,
             })
             : Promise.resolve([]);
@@ -41,6 +51,7 @@ router.get('/search', async (req, res, next) => {
                 type: 'task',
                 id: t.id,
                 title: t.title,
+                idTask: t.idTask,
                 subtitle: t.sprintId ? `Sprint #${t.sprintId}` : 'Backlog',
                 route: '/backlog',
                 meta: { sprintId: t.sprintId ?? null },
@@ -49,7 +60,8 @@ router.get('/search', async (req, res, next) => {
                 type: 'epic',
                 id: e.id,
                 title: e.title,
-                subtitle: 'Épico',
+                key: e.key,
+                subtitle: e.key,
                 route: '/epic',
             })),
         ];
