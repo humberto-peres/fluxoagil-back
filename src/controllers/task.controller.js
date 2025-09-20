@@ -17,7 +17,16 @@ function serializeTask(t) {
 }
 
 module.exports = {
-  async getAll(req, res) {
+  async getAllTasks(req, res) {
+    try {     
+      const tasks = await service.getAllTasks();
+      res.json(tasks.map(serializeTask));
+    } catch (e) {
+      res.status(400).json({ message: e?.message || "Erro ao buscar tarefas" });
+    }
+  },
+
+  async getTasks(req, res) {
     try {
       const { workspaceId, stepId, sprintId } = req.query;
       const params = {
@@ -25,7 +34,7 @@ module.exports = {
         stepId,
         sprintId: sprintId === 'null' ? null : sprintId,
       };
-      const tasks = await service.getAll(params);
+      const tasks = await service.getTasks(params);
       res.json(tasks.map(serializeTask));
     } catch (e) {
       res.status(400).json({ message: e?.message || "Erro ao buscar tarefas" });

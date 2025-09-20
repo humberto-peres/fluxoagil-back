@@ -23,7 +23,23 @@ async function ensureEpicInWorkspace(epicId, workspaceId) {
 }
 
 module.exports = {
-  getAll: async ({ workspaceId, stepId, sprintId }) => {
+  getAllTasks: async () => {
+    return prisma.task.findMany({
+      include: {
+        priority: true,
+        typeTask: true,
+        reporter: true,
+        assignee: true,
+        step: true,
+        sprint: { select: { id: true, workspaceId: true } },
+        workspace: { select: { id: true, key: true } },
+        epic: { select: { id: true, key: true, title: true } },
+      },
+      orderBy: { id: "asc" },
+    });
+  },
+
+  getTasks: async ({ workspaceId, stepId, sprintId }) => {
     return prisma.task.findMany({
       where: {
         workspaceId: workspaceId ? Number(workspaceId) : undefined,
@@ -54,7 +70,7 @@ module.exports = {
         reporter: true,
         assignee: true,
         step: true,
-        sprint: { select: { id: true, workspaceId: true } },
+        sprint: { select: { id: true, workspaceId: true, name: true } },
         workspace: { select: { id: true, key: true } },
         epic: { select: { id: true, key: true, title: true } },
       },
