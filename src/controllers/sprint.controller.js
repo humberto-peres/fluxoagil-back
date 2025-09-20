@@ -7,6 +7,8 @@ function serializeSprint(s) {
     ...s,
     startDate: formatSPDate(s.startDate),
     endDate: formatSPDate(s.endDate),
+    activatedAt: s.activatedAt ? formatSPDateTime(s.activatedAt) : null,
+    closedAt: s.closedAt ? formatSPDateTime(s.closedAt) : null,
     createdAt: formatSPDateTime(s.createdAt),
     updatedAt: formatSPDateTime(s.updatedAt),
   };
@@ -14,9 +16,9 @@ function serializeSprint(s) {
 
 module.exports = {
   async getAll(req, res) {
-    const { workspaceId, active } = req.query;
+    const { workspaceId, active, state } = req.query;
     const isActive = typeof active === 'string' ? active === 'true' : undefined;
-    const list = await service.getAll({ workspaceId, isActive });
+    const list = await service.getAll({ workspaceId, state, isActive });
     res.json(list.map(serializeSprint));
   },
 
@@ -48,7 +50,8 @@ module.exports = {
   },
 
   async close(req, res) {
-    const updated = await service.close(Number(req.params.id));
-    res.json(serializeSprint(updated));
+    const { move } = req.body || {};
+    const result = await service.close(Number(req.params.id), { move });
+    res.json({ sprint: serializeSprint(result.sprint), movedCount: result.movedCount });
   },
 };
