@@ -36,7 +36,7 @@ router.get('/search', async (req, res, next) => {
                 where: {
                     OR: [
                         { title: { contains: q, mode: 'insensitive' } },
-                        { key: { contains: q, mode: 'insensitive' } }, // 👈 busca por key
+                        { key: { contains: q, mode: 'insensitive' } },
                     ],
                 },
                 select: { id: true, title: true, key: true },

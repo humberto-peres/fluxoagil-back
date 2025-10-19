@@ -3,7 +3,6 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const bodyParser = require('body-parser');
 
 const app = express();
 
@@ -20,19 +19,11 @@ const epicRoutes = require('./routes/epic.routes');
 const authRoutes = require('./routes/auth.routes');
 const searchRoutes = require('./routes/search.routes');
 
-const integrationsGithubRoutes = require('./routes/integrationsGithub.routes');
-const githubWebhookHandler = require('./routes/github.webhook');
-
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
   credentials: true,
 }));
 app.use(cookieParser());
-
-const githubWebhookJson = bodyParser.json({
-  verify: (req, res, buf) => { req.rawBody = buf; },
-});
-app.post('/integrations/github/webhook', githubWebhookJson, githubWebhookHandler);
 
 app.use(express.json());
 
@@ -48,7 +39,6 @@ app.use('/tasks', taskRoutes);
 app.use('/sprints', sprintRoutes);
 app.use('/epics', epicRoutes);
 
-app.use('/integrations/github', integrationsGithubRoutes);
 app.use(searchRoutes);
 
 app.get('/', (_, res) => {
@@ -56,6 +46,8 @@ app.get('/', (_, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const HOST = process.env.HOST || '::';
+
+app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

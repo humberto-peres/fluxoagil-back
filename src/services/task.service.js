@@ -23,8 +23,17 @@ async function ensureEpicInWorkspace(epicId, workspaceId) {
 }
 
 module.exports = {
-  getAllTasks: async () => {
+  getAllTasks: async (userId) => {
     return prisma.task.findMany({
+      where: {
+        workspace: {
+          team: {
+            members: {
+              some: { userId: Number(userId) }
+            }
+          }
+        }
+      },
       include: {
         priority: true,
         typeTask: true,

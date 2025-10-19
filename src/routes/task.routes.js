@@ -1,6 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/task.controller');
+const { authRequired } = require('../middlewares/auth');
+
+router.use(authRequired);
 
 router.get('/all', controller.getAllTasks);
 router.get('/', controller.getTasks);
