@@ -20,6 +20,7 @@ const epicRoutes = require('./routes/epic.routes');
 const authRoutes = require('./routes/auth.routes');
 const searchRoutes = require('./routes/search.routes');
 const dashboardRoutes = require('./routes/dashboard.routes');
+const healthRoutes = require('./routes/health.routes');
 
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
@@ -47,6 +48,7 @@ app.use('/sprints', sprintRoutes);
 app.use('/epics', epicRoutes);
 app.use(searchRoutes);
 app.use('/dashboard', dashboardRoutes);
+app.use('/', healthRoutes);
 
 app.get('/', (_, res) => {
   res.send('API funcionando ✅');
