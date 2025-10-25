@@ -2,15 +2,23 @@ const userService = require("../services/user.service");
 
 module.exports = {
 	async getAll(req, res) {
-		const users = await userService.getAll();
-		res.json(users);
+		try {
+			const users = await userService.getAll();
+			res.json(users);
+		} catch (err) {
+			res.status(500).json({ message: "Erro ao buscar usuários" });
+		}
 	},
 
 	async getById(req, res) {
-		const { id } = req.params;
-		const user = await userService.getById(Number(id));
-		if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
-		res.json(user);
+		try {
+			const { id } = req.params;
+			const user = await userService.getById(Number(id));
+			if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+			res.json(user);
+		} catch (err) {
+			res.status(500).json({ message: "Erro ao buscar usuário" });
+		}
 	},
 
 	async create(req, res) {
@@ -41,7 +49,7 @@ module.exports = {
 			await userService.removeMany(ids.map(Number));
 			res.json({ message: "Usuários excluídos com sucesso" });
 		} catch (error) {
-			res.status(500).json({ message: "Erro ao excluir usuários", error: String(error) });
+			res.status(500).json({ message: error.message, error: String(error) });
 		}
 	},
 };

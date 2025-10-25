@@ -166,8 +166,66 @@ module.exports = {
   },
 
   async removeMany(ids) {
+    const userIds = ids.map(Number);
+    
+    const admins = await prisma.user.findMany({
+      where: {
+        id: { in: userIds },
+        role: "admin",
+      },
+      select: { id: true, name: true },
+    });
+
+    if (admins.length > 0) {
+      const e = new Error(`Não é permitido excluir um administrador`);
+      e.status = 403;
+      throw e;
+    }
+
+    const usersWithTasks = await prisma.task.findMany({
+      where: {
+        OR: [
+          { userId: { in: userIds } },
+          { reporterId: { in: userIds } },
+          { assigneeId: { in: userIds } },
+        ],
+      },
+      select: {
+        user: { select: { id: true, name: true } },
+        reporter: { select: { id: true, name: true } },
+        assignee: { select: { id: true, name: true } },
+      },
+    });
+
+    if (usersWithTasks.length > 0) {
+      const userNames = new Set();
+      usersWithTasks.forEach((task) => {
+        if (task.user && userIds.includes(task.user.id)) userNames.add(task.user.name);
+        if (task.reporter && userIds.includes(task.reporter.id)) userNames.add(task.reporter.name);
+        if (task.assignee && userIds.includes(task.assignee.id)) userNames.add(task.assignee.name);
+      });
+
+      const e = new Error(`Usuários com tarefas associadas não podem ser excluídos: ${Array.from(userNames).join(", ")}`);
+      e.status = 400;
+      throw e;
+    }
+
+    const usersInTeams = await prisma.teamMember.findMany({
+      where: { userId: { in: userIds } },
+      include: {
+        user: { select: { id: true, name: true } },
+      },
+    });
+
+    if (usersInTeams.length > 0) {
+      const userNames = [...new Set(usersInTeams.map((tm) => tm.user.name))].join(", ");
+      const e = new Error(`Usuários que são membros de equipes não podem ser excluídos: ${userNames}`);
+      e.status = 400;
+      throw e;
+    }
+
     return prisma.user.deleteMany({
-      where: { id: { in: ids } },
+      where: { id: { in: userIds } },
     });
   },
 };

@@ -19,7 +19,7 @@ function serializeTask(t) {
 module.exports = {
   async getAllTasks(req, res) {
     try {     
-      const tasks = await service.getAllTasks();
+      const tasks = await service.getAllTasks(req.user.id);
       res.json(tasks.map(serializeTask));
     } catch (e) {
       res.status(400).json({ message: e?.message || "Erro ao buscar tarefas" });

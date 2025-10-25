@@ -16,9 +16,8 @@ function serializeSprint(s) {
 
 module.exports = {
   async getAll(req, res) {
-    const { workspaceId, active, state } = req.query;
-    const isActive = typeof active === 'string' ? active === 'true' : undefined;
-    const list = await service.getAll({ workspaceId, state, isActive });
+    const { workspaceId, state } = req.query;
+    const list = await service.getAll({ workspaceId, state });
     res.json(list.map(serializeSprint));
   },
 

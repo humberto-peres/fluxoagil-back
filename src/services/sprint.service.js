@@ -18,16 +18,9 @@ async function getFinalStepId(workspaceId) {
   return steps.length ? steps[steps.length - 1].stepId : null;
 }
 
-async function getAll({ workspaceId, state, isActive } = {}) {
+async function getAll({ workspaceId, state } = {}) {
   const where = { workspaceId: workspaceId ? Number(workspaceId) : undefined };
   
-  /**
-   * Classificação baseada somente em closedAt:
-   * - closed:   closedAt != null (encerrada via ação do usuário)
-   * - open:     closedAt == null  (independe de endDate / isActive)
-   * - active:   isActive == true  (uma sprint pode estar ativa e ainda não "fechada")
-   * - planned:  isActive == false && closedAt == null
-   */
   if (state) {
     if (state === 'active') {
       where.isActive = true;
@@ -39,13 +32,7 @@ async function getAll({ workspaceId, state, isActive } = {}) {
       where.closedAt = { not: null };
     } else if (state === 'open') {
       where.closedAt = { equals: null };
-    } else {
-      where.closedAt = { equals: null };
     }
-  } else if (typeof isActive === 'boolean') {
-    where.isActive = isActive;
-  } else {
-    where.closedAt = { equals: null };
   }
 
   return prisma.sprint.findMany({
