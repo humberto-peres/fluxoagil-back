@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const { swaggerUi, specs } = require('./config/swagger');
 
 const app = express();
 
@@ -18,14 +19,20 @@ const sprintRoutes = require('./routes/sprint.routes');
 const epicRoutes = require('./routes/epic.routes');
 const authRoutes = require('./routes/auth.routes');
 const searchRoutes = require('./routes/search.routes');
+const dashboardRoutes = require('./routes/dashboard.routes');
 
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
   credentials: true,
 }));
 app.use(cookieParser());
-
 app.use(express.json());
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: "Task Management API",
+  customfavIcon: "/favicon.ico"
+}));
 
 app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
@@ -38,8 +45,8 @@ app.use('/workspaces', workspaceRoutes);
 app.use('/tasks', taskRoutes);
 app.use('/sprints', sprintRoutes);
 app.use('/epics', epicRoutes);
-
 app.use(searchRoutes);
+app.use('/dashboard', dashboardRoutes);
 
 app.get('/', (_, res) => {
   res.send('API funcionando ✅');
@@ -50,4 +57,5 @@ const HOST = process.env.HOST || '::';
 
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📚 API Documentation available at http://localhost:${PORT}/api-docs`);
 });
