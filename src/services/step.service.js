@@ -2,7 +2,18 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 module.exports = {
-	getAll: () => prisma.step.findMany(),
+	async getAll(workspaceId) {
+		if (workspaceId) {
+			const workspaceSteps = await prisma.workspaceStep.findMany({
+				where: { workspaceId },
+				include: { step: true },
+				orderBy: { order: 'asc' }
+			});
+			return workspaceSteps.map(ws => ws.step);
+		}
+		
+		return prisma.step.findMany();
+	},
 
 	getById: (id) => prisma.step.findUnique({ where: { id } }),
 

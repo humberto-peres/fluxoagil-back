@@ -2,7 +2,9 @@ const service = require('../services/step.service');
 
 module.exports = {
 	async getAll(req, res) {
-		const steps = await service.getAll();
+		const { workspaceId } = req.query;
+		
+		const steps = await service.getAll(workspaceId ? Number(workspaceId) : undefined);
 		res.json(steps);
 	},
 
