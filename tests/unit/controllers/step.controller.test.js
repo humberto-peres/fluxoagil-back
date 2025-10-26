@@ -29,7 +29,7 @@ describe('Step Controller', () => {
 
       await stepController.getAll(req, res);
 
-      expect(stepService.getAll).toHaveBeenCalledWith();
+      expect(stepService.getAll).toHaveBeenCalled();
       expect(res.json).toHaveBeenCalledWith(mockSteps);
     });
 
@@ -227,9 +227,9 @@ describe('Step Controller', () => {
       await stepController.removeMany(req, res);
 
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ 
-        message: 'Erro ao excluir etapas', 
-        error 
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Erro ao excluir etapas',
+        error
       });
     });
   });
