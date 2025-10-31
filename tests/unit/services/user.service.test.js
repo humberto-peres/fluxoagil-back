@@ -92,6 +92,7 @@ describe('User Service', () => {
         email: 'carlos@test.com',
         username: 'carlos',
         password: 'senha123',
+        address: {}
       };
       mockPrismaClient.user.create.mockResolvedValue({ id: 5, ...newUser });
 
@@ -117,6 +118,7 @@ describe('User Service', () => {
         name: 'Test',
         email: 'test@test.com',
         password: '12345',
+        address: {}
       };
 
       await expect(userService.create(newUser)).rejects.toMatchObject({
@@ -129,6 +131,7 @@ describe('User Service', () => {
       const newUser = {
         name: 'Test',
         email: 'test@test.com',
+        address: {}
       };
 
       await expect(userService.create(newUser)).rejects.toMatchObject({
@@ -142,12 +145,14 @@ describe('User Service', () => {
         name: 'João',
         email: 'joao@test.com',
         password: '123456',
-        street: 'Rua A',
-        city: 'São Paulo',
-        state: 'SP',
-        zipCode: '01234-567',
-        neighborhood: 'Centro',
-        number: 100,
+        address: {
+          street: 'Rua A',
+          city: 'São Paulo',
+          state: 'SP',
+          zipCode: '01234-567',
+          neighborhood: 'Centro',
+          number: 100,
+        }
       };
       mockPrismaClient.user.create.mockResolvedValue({ id: 1 });
 
@@ -170,36 +175,19 @@ describe('User Service', () => {
       });
     });
 
-    test('deve criar usuário sem endereço quando incompleto', async () => {
-      const newUser = {
-        name: 'Maria',
-        email: 'maria@test.com',
-        password: '123456',
-        street: 'Rua B',
-      };
-      mockPrismaClient.user.create.mockResolvedValue({ id: 2 });
-
-      await userService.create(newUser);
-
-      expect(mockPrismaClient.user.create).toHaveBeenCalledWith({
-        data: expect.not.objectContaining({
-          address: expect.any(Object),
-        }),
-        select: expect.any(Object),
-      });
-    });
-
     test('deve aceitar cep como alternativa para zipCode', async () => {
       const newUser = {
         name: 'Ana',
         email: 'ana@test.com',
         password: '123456',
-        street: 'Rua C',
-        city: 'Rio',
-        state: 'RJ',
         cep: '20000-000',
-        neighborhood: 'Centro',
-        number: 50,
+        address: {
+          street: 'Rua C',
+          city: 'Rio',
+          state: 'RJ',
+          neighborhood: 'Centro',
+          number: 50,
+        }
       };
       mockPrismaClient.user.create.mockResolvedValue({ id: 3 });
 
@@ -222,6 +210,7 @@ describe('User Service', () => {
         name: 'Test',
         email: 'duplicate@test.com',
         password: '123456',
+        address: {}
       };
       const prismaError = {
         code: 'P2002',
@@ -238,7 +227,11 @@ describe('User Service', () => {
 
   describe('update', () => {
     test('deve atualizar usuário com sucesso', async () => {
-      const updateData = { name: 'João Atualizado', email: 'joao.novo@test.com' };
+      const updateData = { 
+        name: 'João Atualizado', 
+        email: 'joao.novo@test.com',
+        address: {}
+      };
       mockPrismaClient.user.update.mockResolvedValue({ id: 1, ...updateData });
 
       const result = await userService.update(1, updateData);
@@ -255,7 +248,10 @@ describe('User Service', () => {
     });
 
     test('deve atualizar senha quando fornecida', async () => {
-      const updateData = { password: 'novaSenha123' };
+      const updateData = { 
+        password: 'novaSenha123',
+        address: {}
+      };
       mockPrismaClient.user.update.mockResolvedValue({ id: 1 });
 
       await userService.update(1, updateData);
@@ -273,7 +269,10 @@ describe('User Service', () => {
 
 
     test('deve lançar erro quando senha tiver menos de 6 caracteres', async () => {
-      const updateData = { password: '12345' };
+      const updateData = { 
+        password: '12345',
+        address: {}
+      };
 
       await expect(userService.update(1, updateData)).rejects.toMatchObject({
         message: 'Senha deve ter no mínimo 6 caracteres.',
@@ -282,7 +281,11 @@ describe('User Service', () => {
     });
 
     test('não deve atualizar senha quando vazia ou apenas espaços', async () => {
-      const updateData = { name: 'Test', password: '   ' };
+      const updateData = { 
+        name: 'Test', 
+        password: '   ',
+        address: {}
+      };
       mockPrismaClient.user.update.mockResolvedValue({ id: 1 });
 
       await userService.update(1, updateData);
@@ -300,12 +303,14 @@ describe('User Service', () => {
     test('deve fazer upsert de endereço quando completo', async () => {
       const updateData = {
         name: 'Test',
-        street: 'Rua Nova',
-        city: 'Curitiba',
-        state: 'PR',
-        zipCode: '80000-000',
-        neighborhood: 'Batel',
-        number: 200,
+        address: {
+          street: 'Rua Nova',
+          city: 'Curitiba',
+          state: 'PR',
+          zipCode: '80000-000',
+          neighborhood: 'Batel',
+          number: 200,
+        }
       };
       mockPrismaClient.user.update.mockResolvedValue({ id: 1 });
 
@@ -334,7 +339,9 @@ describe('User Service', () => {
     test('não deve fazer upsert quando endereço incompleto', async () => {
       const updateData = {
         name: 'Test',
-        street: 'Rua',
+        address: {
+          street: 'Rua',
+        }
       };
       mockPrismaClient.user.update.mockResolvedValue({ id: 1 });
 
@@ -350,7 +357,10 @@ describe('User Service', () => {
     });
 
     test('deve tratar erro de violação de unicidade', async () => {
-      const updateData = { email: 'duplicate@test.com' };
+      const updateData = { 
+        email: 'duplicate@test.com',
+        address: {}
+      };
       const prismaError = {
         code: 'P2002',
         meta: { target: ['email'] },

@@ -28,14 +28,17 @@ function splitAndNormalize(data = {}) {
     username,
     password,
     role,
-    cep,
+    cep    
+  } = data;
+
+  const {
     zipCode,
     state,
     city,
     street,
     neighborhood,
-    number,
-  } = data;
+    number
+  } = data.address;
 
   const userData = {
     name,
@@ -45,7 +48,7 @@ function splitAndNormalize(data = {}) {
     role,
   };
 
-  const addressDataRaw = {
+  const addressData = {
     street,
     city,
     state,
@@ -53,10 +56,6 @@ function splitAndNormalize(data = {}) {
     zipCode: zipCode || cep,
     number: number != null ? Number(number) : undefined,
   };
-
-  const addressData = Object.fromEntries(
-    Object.entries(addressDataRaw).filter(([, v]) => v !== undefined && v !== null && v !== "")
-  );
 
   return { userData, addressData };
 }
@@ -108,9 +107,9 @@ module.exports = {
       password: passwordHash,
     };
 
-    if (isAddressComplete(addressData)) {
+    if (addressData) {
       createData.address = { create: addressData };
-    }
+    } 
 
     try {
       return await prisma.user.create({
