@@ -25,7 +25,7 @@ const healthRoutes = require('./routes/health.routes');
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://fluxoagil-mq15lur5o-humbertos-projects-59988371.vercel.app'
+    /https:\/\/.*\.vercel\.app$/
   ],
   credentials: true,
 }));
