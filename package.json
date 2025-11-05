@@ -24,6 +24,7 @@
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
+    "build": "npx prisma generate",
     "seed": "prisma db seed",
     "test": "jest",
     "test:watch": "jest --watch",

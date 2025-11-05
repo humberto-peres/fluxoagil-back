@@ -23,7 +23,11 @@ const dashboardRoutes = require('./routes/dashboard.routes');
 const healthRoutes = require('./routes/health.routes');
 
 app.use(cors({
-  origin: process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
+  origin: [
+    process.env.FRONTEND_ORIGIN,
+    'http://localhost:5173',
+    'https://fluxoagil-mq15lur5o-humbertos-projects-59988371.vercel.app'
+  ],
   credentials: true,
 }));
 app.use(cookieParser());
@@ -55,7 +59,7 @@ app.get('/', (_, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const HOST = process.env.HOST || '::';
+const HOST = '0.0.0.0';
 
 app.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
