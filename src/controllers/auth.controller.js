@@ -23,11 +23,15 @@ module.exports = {
 		if (!ok) return res.status(401).json({ message: 'Usuário/senha inválidos' });
 
 		const token = sign(user);
+
+		const isProduction = process.env.NODE_ENV === 'production';
+
 		res.cookie('token', token, {
 			httpOnly: true,
-			sameSite: 'lax',
-			secure: process.env.NODE_ENV === 'production',
+			sameSite: isProduction ? 'none' : 'lax',
+			secure: isProduction,
 			maxAge: 7 * 24 * 60 * 60 * 1000,
+			path: '/',
 		});
 
 		res.json({
@@ -49,11 +53,15 @@ module.exports = {
 	},
 
 	async logout(req, res) {
+		const isProduction = process.env.NODE_ENV === 'production';
+
 		res.clearCookie('token', {
 			httpOnly: true,
-			sameSite: 'lax',
-			secure: process.env.NODE_ENV === 'production',
+			sameSite: isProduction ? 'none' : 'lax',
+			secure: isProduction,
+			path: '/',
 		});
+
 		res.json({ message: 'OK' });
 	},
 };

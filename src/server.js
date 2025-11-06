@@ -25,9 +25,14 @@ const healthRoutes = require('./routes/health.routes');
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    /https:\/\/.*\.vercel\.app$/
+    'http://localhost:4173',
+    'https://fluxoagil.vercel.app'
   ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Set-Cookie'],
+  optionsSuccessStatus: 200
 }));
 app.use(cookieParser());
 app.use(express.json());
