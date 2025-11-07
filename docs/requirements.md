@@ -13,12 +13,10 @@
 - **RF09**: O usuário deve poder configurar propriedades iniciais do quadro (Prioridade, Etapa, Equipe, Workspace).
 - **RF10**: O usuário deve poder acessar os workspaces em que está incluído como membro.
 - **RF11**: O sistema deve criar novas tarefas na coluna inicial definida pelo usuário.
-- **RF12**: O usuário deve poder aplicar filtros para busca de tarefas, quadros ou workspaces.
-- **RF13**: O sistema deve permitir visualização detalhada de uma tarefa.
-- **RF14**: O usuário administrador deve poder criar equipes (times) associando membros.
-- **RF15**: O sistema deve realizar movimentação automática de tarefas ao serem concluídas, ao atingir data limite ou ao detectar commits/merges Git.
-- **RF16**: O sistema deve disponibilizar dashboards de progresso por status, equipe e membro.
-- **RF17**: O sistema deve exibir notificações em tela para alterações de status das tarefas.
+- **RF12**: O sistema deve permitir visualização detalhada de uma tarefa.
+- **RF13**: O usuário administrador deve poder criar, editar e excluir usuários.
+- **RF14**: O sistema deve disponibilizar dashboards para visualização do progresso de tarefas
+por diferentes metricas que podem ser escolhidas pelo usuário.
 
 ---
 
