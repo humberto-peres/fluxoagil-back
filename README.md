@@ -26,7 +26,7 @@ Em ambientes empresariais cada vez mais dinâmicos, a organização e o monitora
 - **Frontend**: ReactJS, com **Ant Design** para UI responsiva, interativa e otimizada.
 - **Banco de Dados**: NodeJS com Express e **Prisma ORM** para comunicação com o **PostgreSQL**.
 - **Conteinerização**: Docker para padronização e facilidade de deploy.
-- **Testes**: Jest (unitários), Cypress (end-to-end).
+- **Testes**: Jest  (back-end), Vitest (front-end).
 
 ## Objetivos do Projeto
 
@@ -40,12 +40,10 @@ Em ambientes empresariais cada vez mais dinâmicos, a organização e o monitora
 
 - Interface responsiva e interativa.
 - Criação, edição e exclusão de tarefas.
-- Status personalizados e automatizações.
 - Atribuição de responsáveis e prazos.
 - Visualização em Kanban e Scrum.
 - Workspaces configuráveis.
 - Dashboards para acompanhamento de progresso.
-- Notificações em tela para mudanças de status.
 - Autenticação segura via JWT.
 
 ## Documentação
@@ -56,4 +54,4 @@ Em ambientes empresariais cada vez mais dinâmicos, a organização e o monitora
 
 ## Links Importantes
 
-- **RFC**: [RFC.pdf](https://github.com/user-attachments/files/22443892/Sistema_de_Gestao_de_Tarefas_e_Projetos.pdf)
+- **RFC**: [RFC.pdf](https://github.com/user-attachments/files/23426963/RFC.pdf)
