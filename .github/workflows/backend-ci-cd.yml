@@ -43,6 +43,41 @@ jobs:
           files: ./coverage/lcov.info
         continue-on-error: true
 
+  sonarcloud:
+    name: 📊 SonarCloud Analysis
+    runs-on: ubuntu-latest
+    needs: [test]
+    
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🟢 Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install
+        run: npm ci
+
+      - name: 🔧 Prisma Generate
+        run: npx prisma generate
+
+      - name: 🧪 Run Tests with Coverage
+        run: npm run test:coverage
+        env:
+          NODE_ENV: test
+        continue-on-error: true
+
+      - name: 📊 SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
   security:
     name: 🔐 Segurança
     runs-on: ubuntu-latest
@@ -67,7 +102,7 @@ jobs:
   deploy:
     name: 🚀 Deploy
     runs-on: ubuntu-latest
-    needs: [test, security]
+    needs: [test, security, sonarcloud]
     if: false
     
     steps:
