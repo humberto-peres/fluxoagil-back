@@ -46,7 +46,7 @@ jobs:
   sonarcloud:
     name: 📊 SonarCloud Analysis
     runs-on: ubuntu-latest
-    needs: [test]
+    # needs: [test]
     
     steps:
       - name: 📥 Checkout
