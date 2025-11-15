@@ -1,20 +1,16 @@
-# Dockerfile
-FROM node:20
+FROM node:20-alpine
 
-# Diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copia package.json e package-lock.json
 COPY package*.json ./
+COPY prisma ./prisma/
 
-# Instala dependências
-RUN npm install
+RUN npm ci --only=production
 
-# Copia o restante do código
+RUN npx prisma generate
+
 COPY . .
 
-# Expõe a porta usada pela sua aplicação
 EXPOSE 3000
 
-# Comando para iniciar a aplicação
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]

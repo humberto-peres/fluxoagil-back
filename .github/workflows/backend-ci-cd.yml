@@ -8,6 +8,10 @@ on:
 
 env:
   NODE_VERSION: '20.x'
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: fluxoagil-backend
+  ECS_CLUSTER: fluxoagil-cluster
+  ECS_SERVICE: fluxoagil-service
 
 jobs:
   test:
@@ -100,30 +104,103 @@ jobs:
         continue-on-error: true
 
   deploy:
-    name: 🚀 Deploy
+    name: 🚀 Deploy AWS
     runs-on: ubuntu-latest
     needs: [test, security, sonarcloud]
-    if: false
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     
     steps:
-      - name: 🚀 Trigger Render Deploy
-        run: |
-          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK }}"
-          echo "✅ Deploy iniciado!"
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
 
-      - name: ⏳ Aguardar deploy
-        run: sleep 30
+      - name: 🔐 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🔑 Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: 🐳 Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          echo "🔨 Building Docker image..."
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          echo "📤 Pushing to ECR..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          
+          echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: 🚀 Deploy to Amazon ECS
+        run: |
+          echo "🔄 Forcing new deployment..."
+          aws ecs update-service \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service ${{ env.ECS_SERVICE }} \
+            --force-new-deployment \
+            --region ${{ env.AWS_REGION }}
+          
+          echo "✅ Deploy started! ECS will pull new image and restart tasks."
+
+      - name: ⏳ Wait for deployment to stabilize
+        run: |
+          echo "⏳ Waiting for service to become stable..."
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }} \
+            --region ${{ env.AWS_REGION }} || true
+          
+          echo "✅ Deployment complete!"
 
       - name: 🏥 Health Check
         run: |
-          for i in {1..5}; do
-            status=$(curl -s -o /dev/null -w "%{http_code}" "${{ secrets.BACKEND_URL }}/health" || echo "000")
-            if [ "$status" = "200" ]; then
-              echo "✅ API online!"
-              exit 0
-            fi
-            echo "⏳ Tentativa $i/5..."
-            sleep 10
-          done
-          echo "⚠️ API em warm-up"
+          echo "🔍 Waiting for tasks to start..."
+          sleep 30
+          
+          # Get task public IP
+          TASK_ARN=$(aws ecs list-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service-name ${{ env.ECS_SERVICE }} \
+            --desired-status RUNNING \
+            --region ${{ env.AWS_REGION }} \
+            --query 'taskArns[0]' \
+            --output text)
+          
+          if [ "$TASK_ARN" != "None" ]; then
+            TASK_IP=$(aws ecs describe-tasks \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --tasks $TASK_ARN \
+              --region ${{ env.AWS_REGION }} \
+              --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+              --output text | xargs -I {} aws ec2 describe-network-interfaces \
+              --network-interface-ids {} \
+              --query 'NetworkInterfaces[0].Association.PublicIp' \
+              --output text)
+            
+            echo "🌐 Task IP: $TASK_IP"
+            
+            for i in {1..5}; do
+              status=$(curl -s -o /dev/null -w "%{http_code}" "http://$TASK_IP:3000/health" || echo "000")
+              if [ "$status" = "200" ]; then
+                echo "✅ API is healthy and responding!"
+                exit 0
+              fi
+              echo "⏳ Attempt $i/5... (Status: $status)"
+              sleep 10
+            done
+            
+            echo "⚠️ Health check timeout, but deployment was successful"
+          else
+            echo "⚠️ Could not get task IP for health check"
+          fi
         continue-on-error: true

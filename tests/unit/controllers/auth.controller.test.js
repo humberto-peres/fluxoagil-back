@@ -35,7 +35,7 @@ describe('Auth Controller', () => {
       cookie: jest.fn().mockReturnThis(),
       clearCookie: jest.fn().mockReturnThis(),
     };
-    
+
     process.env.JWT_SECRET = 'test-secret';
     process.env.JWT_EXPIRES = '7d';
     process.env.NODE_ENV = 'test';
@@ -57,7 +57,7 @@ describe('Auth Controller', () => {
 
     test('deve fazer login com credenciais válidas', async () => {
       req.body = { username: 'johndoe', password: 'password123' };
-      
+
       mockPrismaClient.user.findUnique.mockResolvedValue(mockUser);
       bcrypt.compare.mockResolvedValue(true);
       jwt.sign.mockReturnValue('mock-jwt-token');
@@ -83,6 +83,7 @@ describe('Auth Controller', () => {
         sameSite: 'lax',
         secure: false,
         maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/',
       });
       expect(res.json).toHaveBeenCalledWith({
         id: mockUser.id,
@@ -163,7 +164,7 @@ describe('Auth Controller', () => {
     test('deve usar secure: true em produção', async () => {
       process.env.NODE_ENV = 'production';
       req.body = { username: 'johndoe', password: 'password123' };
-      
+
       mockPrismaClient.user.findUnique.mockResolvedValue(mockUser);
       bcrypt.compare.mockResolvedValue(true);
       jwt.sign.mockReturnValue('mock-jwt-token');
@@ -172,9 +173,10 @@ describe('Auth Controller', () => {
 
       expect(res.cookie).toHaveBeenCalledWith('token', 'mock-jwt-token', {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         secure: true,
         maxAge: 7 * 24 * 60 * 60 * 1000,
+        path: '/',
       });
     });
 
@@ -195,7 +197,7 @@ describe('Auth Controller', () => {
         email: 'john@example.com',
         role: 'user',
       };
-      
+
       req.user = { id: 1 };
       mockPrismaClient.user.findUnique.mockResolvedValue(mockUser);
 
@@ -239,6 +241,7 @@ describe('Auth Controller', () => {
         httpOnly: true,
         sameSite: 'lax',
         secure: false,
+        path: '/',
       });
       expect(res.json).toHaveBeenCalledWith({ message: 'OK' });
     });
@@ -250,8 +253,9 @@ describe('Auth Controller', () => {
 
       expect(res.clearCookie).toHaveBeenCalledWith('token', {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         secure: true,
+        path: '/',
       });
     });
   });
