@@ -72,15 +72,30 @@ module.exports = {
     },
 
     update: async (id, data) => {
+        let startDate = undefined;
+        if (data.startDate != null) {
+            startDate = data.startDate ? new Date(data.startDate) : null;
+        }
+
+        let targetDate = undefined;
+        if (data.targetDate != null) {
+            targetDate = data.targetDate ? new Date(data.targetDate) : null;
+        }
+
+        let priorityId = undefined;
+        if (data.priorityId != null) {
+            priorityId = data.priorityId ? Number(data.priorityId) : null;
+        }
+
         return prisma.epic.update({
             where: { id: Number(id) },
             data: {
                 title: data.title ?? undefined,
                 description: data.description ?? undefined,
                 status: data.status ?? undefined,
-                startDate: data.startDate != null ? (data.startDate ? new Date(data.startDate) : null) : undefined,
-                targetDate: data.targetDate != null ? (data.targetDate ? new Date(data.targetDate) : null) : undefined,
-                priorityId: data.priorityId != null ? (data.priorityId ? Number(data.priorityId) : null) : undefined,
+                startDate,
+                targetDate,
+                priorityId,
             },
             include: { priority: true },
         });

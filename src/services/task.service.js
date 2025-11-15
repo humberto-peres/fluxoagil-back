@@ -22,6 +22,59 @@ async function ensureEpicInWorkspace(epicId, workspaceId) {
   }
 }
 
+// Função auxiliar para validar e obter a sprint
+async function validateAndGetSprint(sprintId, workspaceId) {
+  if (!sprintId) return;
+
+  const sprint = await prisma.sprint.findUnique({
+    where: { id: sprintId },
+    select: { id: true, workspaceId: true },
+  });
+
+  if (!sprint) throw new Error("Sprint inexistente.");
+  if (sprint.workspaceId !== workspaceId) {
+    throw new Error("workspaceId difere do workspace da sprint.");
+  }
+}
+
+// Função auxiliar para preparar os valores atualizados
+function prepareNextValues(data, current) {
+  return {
+    workspaceId: data.workspaceId != null ? Number(data.workspaceId) : current.workspaceId,
+    stepId: data.stepId != null ? Number(data.stepId) : current.stepId,
+    sprintId: data.sprintId !== undefined
+      ? (data.sprintId === null ? null : Number(data.sprintId))
+      : current.sprintId,
+  };
+}
+
+// Função auxiliar para construir o objeto de atualização
+function buildUpdatePatch(data, nextValues) {
+  return {
+    title: data.title ?? undefined,
+    description: data.description ?? undefined,
+    estimate: data.estimate ?? undefined,
+    startDate: data.startDate !== undefined ? parseDateInput(data.startDate) : undefined,
+    deadline: data.deadline !== undefined ? parseDateInput(data.deadline) : undefined,
+    sprintId: data.sprintId !== undefined ? nextValues.sprintId : undefined,
+    stepId: data.stepId != null ? nextValues.stepId : undefined,
+    priorityId: data.priorityId != null ? Number(data.priorityId) : undefined,
+    typeTaskId: data.typeTaskId != null ? Number(data.typeTaskId) : undefined,
+    reporterId: data.reporterId !== undefined
+      ? (data.reporterId ? Number(data.reporterId) : null)
+      : undefined,
+    assigneeId: data.assigneeId !== undefined
+      ? (data.assigneeId ? Number(data.assigneeId) : null)
+      : undefined,
+    userId: data.userId != null ? Number(data.userId) : undefined,
+    status: data.status ?? undefined,
+    workspaceId: data.workspaceId != null ? nextValues.workspaceId : undefined,
+    epicId: data.epicId !== undefined
+      ? (data.epicId ? Number(data.epicId) : null)
+      : undefined,
+  };
+}
+
 module.exports = {
   getAllTasks: async (userId) => {
     return prisma.task.findMany({
@@ -145,45 +198,13 @@ module.exports = {
     });
     if (!current) throw new Error("Tarefa inexistente.");
 
-    const nextWorkspaceId =
-      data.workspaceId != null ? Number(data.workspaceId) : current.workspaceId;
-    const nextStepId = data.stepId != null ? Number(data.stepId) : current.stepId;
-    const nextSprintId =
-      data.sprintId !== undefined ? (data.sprintId === null ? null : Number(data.sprintId)) : current.sprintId;
+    const nextValues = prepareNextValues(data, current);
 
-    if (nextSprintId) {
-      const sprint = await prisma.sprint.findUnique({
-        where: { id: nextSprintId },
-        select: { id: true, workspaceId: true },
-      });
-      if (!sprint) throw new Error("Sprint inexistente.");
-      if (sprint.workspaceId !== nextWorkspaceId) {
-        throw new Error("workspaceId difere do workspace da sprint.");
-      }
-    }
+    await validateAndGetSprint(nextValues.sprintId, nextValues.workspaceId);
+    await ensureStepInWorkspace(nextValues.stepId, nextValues.workspaceId);
+    await ensureEpicInWorkspace(data.epicId ?? null, nextValues.workspaceId);
 
-    await ensureStepInWorkspace(nextStepId, nextWorkspaceId);
-    await ensureEpicInWorkspace(data.epicId ?? null, nextWorkspaceId);
-
-    const patch = {
-      title: data.title ?? undefined,
-      description: data.description ?? undefined,
-      estimate: data.estimate ?? undefined,
-      startDate: data.startDate !== undefined ? parseDateInput(data.startDate) : undefined,
-      deadline: data.deadline !== undefined ? parseDateInput(data.deadline) : undefined,
-      sprintId: data.sprintId !== undefined ? nextSprintId : undefined,
-      stepId: data.stepId != null ? nextStepId : undefined,
-      priorityId: data.priorityId != null ? Number(data.priorityId) : undefined,
-      typeTaskId: data.typeTaskId != null ? Number(data.typeTaskId) : undefined,
-      reporterId:
-        data.reporterId !== undefined ? (data.reporterId ? Number(data.reporterId) : null) : undefined,
-      assigneeId:
-        data.assigneeId !== undefined ? (data.assigneeId ? Number(data.assigneeId) : null) : undefined,
-      userId: data.userId != null ? Number(data.userId) : undefined,
-      status: data.status ?? undefined,
-      workspaceId: data.workspaceId != null ? nextWorkspaceId : undefined,
-      epicId: data.epicId !== undefined ? (data.epicId ? Number(data.epicId) : null) : undefined,
-    };
+    const patch = buildUpdatePatch(data, nextValues);
 
     await prisma.task.update({ where: { id: Number(id) }, data: patch });
     return module.exports.getById(id);

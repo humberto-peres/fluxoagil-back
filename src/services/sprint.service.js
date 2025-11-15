@@ -20,7 +20,7 @@ async function getFinalStepId(workspaceId) {
 
 async function getAll({ workspaceId, state } = {}) {
   const where = { workspaceId: workspaceId ? Number(workspaceId) : undefined };
-  
+
   if (state) {
     if (state === 'active') {
       where.isActive = true;
@@ -76,10 +76,20 @@ async function update(id, data) {
   const current = await prisma.sprint.findUnique({ where: { id: Number(id) } });
   if (!current) throw new Error('Sprint inexistente');
 
+  let startDate = undefined;
+  if (data.startDate !== undefined) {
+    startDate = data.startDate ? parseDateInput(data.startDate) : null;
+  }
+
+  let endDate = undefined;
+  if (data.endDate !== undefined) {
+    endDate = data.endDate ? parseDateInput(data.endDate) : null;
+  }
+
   const patch = {
     name: data.name ?? undefined,
-    startDate: data.startDate === undefined ? undefined : (data.startDate ? parseDateInput(data.startDate) : null),
-    endDate: data.endDate === undefined ? undefined : (data.endDate ? parseDateInput(data.endDate) : null),
+    startDate,
+    endDate,
     isActive: data.isActive === undefined ? undefined : Boolean(data.isActive),
   };
 

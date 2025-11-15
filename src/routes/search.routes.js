@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 
 function parseQuery(req) {
     const q = String(req.query.q || '').trim();
-    const limit = Math.min(Math.max(parseInt(req.query.limit || '10', 10), 1), 20);
+    const limit = Math.min(Math.max(Number.parseInt(req.query.limit || '10', 10), 1), 20);
     const types = typeof req.query.types === 'string' ? req.query.types : '';
     return { q, limit, types };
 }

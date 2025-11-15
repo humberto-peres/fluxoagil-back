@@ -67,7 +67,7 @@ function isAddressComplete(addr) {
 }
 
 function mapPrismaError(err) {
-  if (err && err.code === "P2002") {
+  if (err?.code === "P2002") {
     const fields = Array.isArray(err.meta?.target) ? err.meta.target.join(", ") : String(err.meta?.target || "");
     const e = new Error(`Violação de unicidade em: ${fields || "campo único"}.`);
     e.status = 409;
