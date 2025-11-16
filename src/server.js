@@ -26,7 +26,8 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:4173',
-    'https://d3bwv171k698i9.cloudfront.net'
+    'https://d3bwv171k698i9.cloudfront.net',
+    'https://fluxoagilapi.humberto-peres-filho.workers.dev'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
