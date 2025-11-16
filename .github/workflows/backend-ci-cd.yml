@@ -141,47 +141,10 @@ jobs:
           echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: 🟢 Setup Node for Migrations
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: 📦 Install Dependencies for Migrations
-        run: npm ci
-
-      - name: 🗄️ Run Database Migrations
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: |
-          echo "🗄️ Running Prisma migrations..."
-          
-          # Validar se DATABASE_URL existe
-          if [ -z "$DATABASE_URL" ]; then
-            echo "❌ ERROR: DATABASE_URL is empty!"
-            exit 1
-          fi
-          
-          # Extrair e mostrar apenas o host (sem senha)
-          DB_HOST=$(echo $DATABASE_URL | sed 's|.*@\([^:]*\):.*|\1|')
-          echo "✅ Database host: $DB_HOST"
-          
-          # Verificar se não é localhost/postgres
-          if [[ "$DB_HOST" == "localhost" || "$DB_HOST" == "postgres" ]]; then
-            echo "❌ ERROR: DATABASE_URL is pointing to localhost/postgres instead of RDS!"
-            echo "Current DATABASE_URL host: $DB_HOST"
-            exit 1
-          fi
-          
-          # Rodar migrations
-          echo "📦 Running migrations..."
-          npx prisma migrate deploy
-          
-          echo "✅ Migrations completed successfully!"
-
       - name: 🚀 Deploy to Amazon ECS
         run: |
           echo "🔄 Forcing new deployment..."
+          echo "ℹ️  Database migrations will run automatically when container starts"
           aws ecs update-service \
             --cluster ${{ env.ECS_CLUSTER }} \
             --service ${{ env.ECS_SERVICE }} \
