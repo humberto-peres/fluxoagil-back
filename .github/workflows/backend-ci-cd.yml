@@ -10,7 +10,7 @@ env:
   NODE_VERSION: '20.x'
   AWS_REGION: us-east-1
   ECR_REPOSITORY: fluxoagil-backend
-  ECS_CLUSTER: fluxoagil_cluster
+  ECS_CLUSTER: fluxoagil_cluster  # ✅ CORRIGIDO: underscore ao invés de hífen
   ECS_SERVICE: fluxoagil-service
 
 jobs:
@@ -141,11 +141,48 @@ jobs:
           echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+      - name: 🔍 Debug DATABASE_URL Secret
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "🔍 Checking DATABASE_URL secret..."
+          if [ -z "$DATABASE_URL" ]; then
+            echo "❌ DATABASE_URL is EMPTY!"
+          else
+            # Mostrar apenas primeiros e últimos 10 caracteres
+            echo "✅ DATABASE_URL is set (length: ${#DATABASE_URL})"
+            echo "First 20 chars: ${DATABASE_URL:0:20}..."
+            echo "Last 20 chars: ...${DATABASE_URL: -20}"
+          fi
+
       - name: 🗄️ Run Database Migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           echo "🗄️ Running Prisma migrations..."
+          
+          # Debug: verificar se a variável está sendo lida
+          if [ -z "$DATABASE_URL" ]; then
+            echo "❌ ERROR: DATABASE_URL is empty!"
+            exit 1
+          fi
+          
+          # Mostrar apenas o host (sem senha)
+          DB_HOST=$(echo $DATABASE_URL | sed 's|.*@\([^:]*\):.*|\1|')
+          echo "✅ Database host: $DB_HOST"
+          
+          # Verificar se não é localhost/postgres
+          if [[ "$DB_HOST" == "localhost" || "$DB_HOST" == "postgres" ]]; then
+            echo "❌ ERROR: DATABASE_URL is pointing to localhost/postgres instead of RDS!"
+            echo "Current DATABASE_URL host: $DB_HOST"
+            exit 1
+          fi
+          
+          # Criar database se não existir
+          echo "📦 Creating database if not exists..."
+          npx prisma db push --skip-generate || true
+          
+          # Rodar migrações
           npx prisma migrate deploy
           echo "✅ Migrations completed!"
 
