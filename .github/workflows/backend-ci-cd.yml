@@ -10,7 +10,7 @@ env:
   NODE_VERSION: '20.x'
   AWS_REGION: us-east-1
   ECR_REPOSITORY: fluxoagil-backend
-  ECS_CLUSTER: fluxoagil-cluster
+  ECS_CLUSTER: fluxoagil_cluster
   ECS_SERVICE: fluxoagil-service
 
 jobs:
