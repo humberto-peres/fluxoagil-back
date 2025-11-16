@@ -15,11 +15,10 @@
     "@types/node": "^24.3.1",
     "jest": "^30.2.0",
     "nodemon": "^3.1.10",
-    "prisma": "^6.14.0",
     "supertest": "^7.1.4"
   },
   "prisma": {
-    "seed": "node --env-file=.env prisma/seed.cjs"
+    "seed": "node prisma/seed.cjs"
   },
   "scripts": {
     "dev": "nodemon src/server.js",
