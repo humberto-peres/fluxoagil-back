@@ -154,6 +154,15 @@ jobs:
             echo "First 20 chars: ${DATABASE_URL:0:20}..."
             echo "Last 20 chars: ...${DATABASE_URL: -20}"
           fi
+          
+          # Verificar se existe algum .env
+          echo "📁 Checking for .env files..."
+          find . -name ".env*" -type f | head -10 || echo "No .env files found"
+          
+          # Verificar o que o Prisma vai ler
+          echo "🔍 Checking what Prisma will read..."
+          npx prisma --version
+          echo "Schema location: $(find . -name "schema.prisma" -type f)"
 
       - name: 🗄️ Run Database Migrations
         env:
@@ -178,12 +187,17 @@ jobs:
             exit 1
           fi
           
-          # Criar database se não existir
-          echo "📦 Creating database if not exists..."
-          npx prisma db push --skip-generate || true
+          # Criar .env temporário para garantir que o Prisma leia corretamente
+          echo "📝 Creating temporary .env file..."
+          echo "DATABASE_URL=$DATABASE_URL" > .env
           
-          # Rodar migrações
-          npx prisma migrate deploy
+          # Usar o prisma local (já instalado)
+          echo "📦 Running migrations..."
+          ./node_modules/.bin/prisma migrate deploy
+          
+          # Limpar .env
+          rm -f .env
+          
           echo "✅ Migrations completed!"
 
       - name: 🚀 Deploy to Amazon ECS
