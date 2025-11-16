@@ -141,6 +141,14 @@ jobs:
           echo "✅ Image pushed: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
+      - name: 🗄️ Run Database Migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          echo "🗄️ Running Prisma migrations..."
+          npx prisma migrate deploy
+          echo "✅ Migrations completed!"
+
       - name: 🚀 Deploy to Amazon ECS
         run: |
           echo "🔄 Forcing new deployment..."
