@@ -22,7 +22,6 @@ async function ensureEpicInWorkspace(epicId, workspaceId) {
   }
 }
 
-// Função auxiliar para validar e obter a sprint
 async function validateAndGetSprint(sprintId, workspaceId) {
   if (!sprintId) return;
 
@@ -37,7 +36,6 @@ async function validateAndGetSprint(sprintId, workspaceId) {
   }
 }
 
-// Função auxiliar para preparar os valores atualizados
 function prepareNextValues(data, current) {
   return {
     workspaceId: data.workspaceId != null ? Number(data.workspaceId) : current.workspaceId,
@@ -48,31 +46,45 @@ function prepareNextValues(data, current) {
   };
 }
 
-// Função auxiliar para construir o objeto de atualização
+function processOptionalNumber(value) {
+  if (value === undefined) return undefined;
+  return value ? Number(value) : null;
+}
+
+function processRequiredNumber(value) {
+  return value != null ? Number(value) : undefined;
+}
+
 function buildUpdatePatch(data, nextValues) {
-  return {
+  const patch = {
     title: data.title ?? undefined,
     description: data.description ?? undefined,
     estimate: data.estimate ?? undefined,
-    startDate: data.startDate !== undefined ? parseDateInput(data.startDate) : undefined,
-    deadline: data.deadline !== undefined ? parseDateInput(data.deadline) : undefined,
-    sprintId: data.sprintId !== undefined ? nextValues.sprintId : undefined,
-    stepId: data.stepId != null ? nextValues.stepId : undefined,
-    priorityId: data.priorityId != null ? Number(data.priorityId) : undefined,
-    typeTaskId: data.typeTaskId != null ? Number(data.typeTaskId) : undefined,
-    reporterId: data.reporterId !== undefined
-      ? (data.reporterId ? Number(data.reporterId) : null)
-      : undefined,
-    assigneeId: data.assigneeId !== undefined
-      ? (data.assigneeId ? Number(data.assigneeId) : null)
-      : undefined,
-    userId: data.userId != null ? Number(data.userId) : undefined,
     status: data.status ?? undefined,
-    workspaceId: data.workspaceId != null ? nextValues.workspaceId : undefined,
-    epicId: data.epicId !== undefined
-      ? (data.epicId ? Number(data.epicId) : null)
-      : undefined,
   };
+
+  if (data.startDate !== undefined) {
+    patch.startDate = parseDateInput(data.startDate);
+  }
+  if (data.deadline !== undefined) {
+    patch.deadline = parseDateInput(data.deadline);
+  }
+
+  if (data.sprintId !== undefined) {
+    patch.sprintId = nextValues.sprintId;
+  }
+
+  patch.stepId = processRequiredNumber(data.stepId);
+  patch.priorityId = processRequiredNumber(data.priorityId);
+  patch.typeTaskId = processRequiredNumber(data.typeTaskId);
+  patch.userId = processRequiredNumber(data.userId);
+  patch.workspaceId = processRequiredNumber(data.workspaceId);
+
+  patch.reporterId = processOptionalNumber(data.reporterId);
+  patch.assigneeId = processOptionalNumber(data.assigneeId);
+  patch.epicId = processOptionalNumber(data.epicId);
+
+  return patch;
 }
 
 module.exports = {
