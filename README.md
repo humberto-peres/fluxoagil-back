@@ -54,4 +54,4 @@ Em ambientes empresariais cada vez mais dinâmicos, a organização e o monitora
 
 ## Links Importantes
 
-- **RFC**: [RFC.pdf](https://github.com/user-attachments/files/23426963/RFC.pdf)
+- **RFC**: [RFC.pdf](https://github.com/user-attachments/files/23758175/RFC.pdf)
