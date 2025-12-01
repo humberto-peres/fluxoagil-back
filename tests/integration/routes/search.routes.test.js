@@ -1,5 +1,6 @@
 const request = require('supertest');
 const express = require('express');
+const { authRequired } = require('../../../src/middlewares/auth');
 
 const mockPrismaClient = {
   task: {
@@ -13,6 +14,7 @@ const mockPrismaClient = {
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => mockPrismaClient),
 }));
+jest.mock('../../../src/middlewares/auth');
 
 const searchRoutes = require('../../../src/routes/search.routes');
 
@@ -20,6 +22,11 @@ describe('Search Routes', () => {
   let app;
 
   beforeEach(() => {
+    authRequired.mockImplementation((req, res, next) => {
+      req.user = { id: 1 };
+      next();
+    });
+    
     app = express();
     app.use(express.json());
     app.use('/', searchRoutes);

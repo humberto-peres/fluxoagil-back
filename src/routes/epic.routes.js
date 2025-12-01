@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/epic.controller');
+const { authRequired } = require('../middlewares/auth');
 
 /**
  * @swagger
@@ -8,6 +9,7 @@ const controller = require('../controllers/epic.controller');
  *   name: Epics
  *   description: Gerenciamento de épicos
  */
+router.use(authRequired);
 
 /**
  * @swagger

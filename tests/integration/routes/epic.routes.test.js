@@ -2,13 +2,20 @@ const request = require('supertest');
 const express = require('express');
 const epicRoutes = require('../../../src/routes/epic.routes');
 const epicController = require('../../../src/controllers/epic.controller');
+const { authRequired } = require('../../../src/middlewares/auth');
 
 jest.mock('../../../src/controllers/epic.controller');
+jest.mock('../../../src/middlewares/auth');
 
 describe('Epic Routes', () => {
   let app;
 
   beforeEach(() => {
+    authRequired.mockImplementation((req, res, next) => {
+      req.user = { id: 1 };
+      next();
+    });
+    
     app = express();
     app.use(express.json());
     app.use('/epics', epicRoutes);
@@ -23,6 +30,7 @@ describe('Epic Routes', () => {
 
       const response = await request(app).get('/epics');
 
+      expect(authRequired).toHaveBeenCalled();
       expect(epicController.getAll).toHaveBeenCalled();
       expect(response.status).toBe(200);
     });
@@ -34,6 +42,7 @@ describe('Epic Routes', () => {
 
       await request(app).get('/epics?workspaceId=1&status=open');
 
+      expect(authRequired).toHaveBeenCalled();
       expect(epicController.getAll).toHaveBeenCalled();
     });
   });
@@ -46,6 +55,7 @@ describe('Epic Routes', () => {
 
       const response = await request(app).get('/epics/1');
 
+      expect(authRequired).toHaveBeenCalled();
       expect(epicController.getById).toHaveBeenCalled();
       expect(response.status).toBe(200);
     });
@@ -61,6 +71,7 @@ describe('Epic Routes', () => {
         .post('/epics')
         .send({ workspaceId: 1, title: 'New Epic' });
 
+      expect(authRequired).toHaveBeenCalled();
       expect(epicController.create).toHaveBeenCalled();
       expect(response.status).toBe(201);
     });
@@ -76,6 +87,7 @@ describe('Epic Routes', () => {
         .put('/epics/1')
         .send({ title: 'Updated' });
 
+      expect(authRequired).toHaveBeenCalled();
       expect(epicController.update).toHaveBeenCalled();
       expect(response.status).toBe(200);
     });
@@ -91,6 +103,7 @@ describe('Epic Routes', () => {
         .delete('/epics')
         .send({ ids: [1, 2] });
 
+      expect(authRequired).toHaveBeenCalled();
       expect(epicController.removeMany).toHaveBeenCalled();
       expect(response.status).toBe(200);
     });

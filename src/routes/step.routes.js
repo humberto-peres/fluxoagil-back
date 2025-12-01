@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/step.controller');
+const { authRequired } = require('../middlewares/auth');
 
 /**
  * @swagger
@@ -8,6 +9,7 @@ const controller = require('../controllers/step.controller');
  *   name: Steps
  *   description: Gerenciamento de etapas (steps) do workflow
  */
+router.use(authRequired);
 
 /**
  * @swagger

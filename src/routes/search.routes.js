@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { PrismaClient } = require('@prisma/client');
+const { authRequired } = require('../middlewares/auth');
 const prisma = new PrismaClient();
 
 /**
@@ -9,6 +10,7 @@ const prisma = new PrismaClient();
  *   name: Search
  *   description: Busca global no sistema
  */
+router.use(authRequired);
 
 function parseQuery(req) {
     const q = String(req.query.q || '').trim();

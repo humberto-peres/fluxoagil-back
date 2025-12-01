@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/priority.controller');
+const { authRequired } = require('../middlewares/auth');
 
 /**
  * @swagger
@@ -8,6 +9,7 @@ const controller = require('../controllers/priority.controller');
  *   name: Priorities
  *   description: Gerenciamento de prioridades
  */
+router.use(authRequired);
 
 /**
  * @swagger

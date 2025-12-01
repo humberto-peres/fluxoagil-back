@@ -131,7 +131,7 @@ jobs:
           IMAGE_TAG: ${{ github.sha }}
         run: |
           echo "🔨 Building Docker image..."
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build -f Dockerfile.prod -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           
           echo "📤 Pushing to ECR..."

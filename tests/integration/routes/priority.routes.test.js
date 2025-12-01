@@ -2,13 +2,20 @@ const request = require('supertest');
 const express = require('express');
 const priorityRoutes = require('../../../src/routes/priority.routes');
 const priorityController = require('../../../src/controllers/priority.controller');
+const { authRequired } = require('../../../src/middlewares/auth');
 
 jest.mock('../../../src/controllers/priority.controller');
+jest.mock('../../../src/middlewares/auth');
 
 describe('Priority Routes', () => {
   let app;
 
   beforeEach(() => {
+    authRequired.mockImplementation((req, res, next) => {
+      req.user = { id: 1 };
+      next();
+    });
+    
     app = express();
     app.use(express.json());
     app.use('/priorities', priorityRoutes);

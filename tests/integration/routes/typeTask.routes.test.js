@@ -2,13 +2,20 @@ const request = require('supertest');
 const express = require('express');
 const typeTaskRoutes = require('../../../src/routes/typeTask.routes');
 const typeTaskController = require('../../../src/controllers/typeTask.controller');
+const { authRequired } = require('../../../src/middlewares/auth');
 
 jest.mock('../../../src/controllers/typeTask.controller');
+jest.mock('../../../src/middlewares/auth');
 
 describe('TypeTask Routes', () => {
   let app;
 
   beforeEach(() => {
+    authRequired.mockImplementation((req, res, next) => {
+      req.user = { id: 1 };
+      next();
+    });
+
     app = express();
     app.use(express.json());
     app.use('/type-tasks', typeTaskRoutes);

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/teamMember.controller');
+const { authRequired } = require('../middlewares/auth');
 
 /**
  * @swagger
@@ -8,6 +9,7 @@ const controller = require('../controllers/teamMember.controller');
  *   name: TeamMembers
  *   description: Gerenciamento de membros de equipes
  */
+router.use(authRequired);
 
 /**
  * @swagger

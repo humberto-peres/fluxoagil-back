@@ -2,13 +2,20 @@ const request = require('supertest');
 const express = require('express');
 const userRoutes = require('../../../src/routes/user.routes');
 const userController = require('../../../src/controllers/user.controller');
+const { authRequired } = require('../../../src/middlewares/auth');
 
 jest.mock('../../../src/controllers/user.controller');
+jest.mock('../../../src/middlewares/auth');
 
 describe('User Routes', () => {
   let app;
 
   beforeEach(() => {
+    authRequired.mockImplementation((req, res, next) => {
+      req.user = { id: 1 };
+      next();
+    });
+    
     app = express();
     app.use(express.json());
     app.use('/users', userRoutes);

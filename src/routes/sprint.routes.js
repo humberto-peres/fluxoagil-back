@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/sprint.controller');
+const { authRequired } = require('../middlewares/auth');
 
 /**
  * @swagger
@@ -8,6 +9,7 @@ const controller = require('../controllers/sprint.controller');
  *   name: Sprints
  *   description: Gerenciamento de sprints (ciclos de trabalho)
  */
+router.use(authRequired);
 
 /**
  * @swagger

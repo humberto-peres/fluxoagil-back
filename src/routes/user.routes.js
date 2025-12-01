@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const controller = require('../controllers/user.controller');
+const { authRequired } = require('../middlewares/auth');
 
 /**
  * @swagger
@@ -64,7 +65,7 @@ const controller = require('../controllers/user.controller');
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.get('/', controller.getAll);
+router.get('/', authRequired, controller.getAll);
 
 /**
  * @swagger
@@ -112,7 +113,7 @@ router.get('/', controller.getAll);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.get('/:id', controller.getById);
+router.get('/:id', authRequired, controller.getById);
 
 /**
  * @swagger
@@ -360,7 +361,7 @@ router.post('/', controller.create);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.put('/:id', controller.update);
+router.put('/:id', authRequired, controller.update);
 
 /**
  * @swagger
@@ -445,6 +446,6 @@ router.put('/:id', controller.update);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.delete('/', controller.removeMany);
+router.delete('/', authRequired, controller.removeMany);
 
 module.exports = router;
