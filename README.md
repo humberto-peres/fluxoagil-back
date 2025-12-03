@@ -46,6 +46,23 @@ Em ambientes empresariais cada vez mais dinâmicos, a organização e o monitora
 - Dashboards para acompanhamento de progresso.
 - Autenticação segura via JWT.
 
+## Acesso e Teste
+
+### Links da Aplicação
+A aplicação pode ser acessada através dos seguintes links:
+- [https://www.fluxoagil.online](https://www.fluxoagil.online)
+- [http://d3bwv171k698i9.cloudfront.net](http://d3bwv171k698i9.cloudfront.net)
+
+### Credenciais de Teste
+
+#### Usuário Administrador
+Para acessar o sistema com privilégios administrativos, utilize:
+- **Usuário**: `admin`
+- **Senha**: `admin123`
+
+#### Novos Usuários
+Você pode criar sua própria conta através da funcionalidade de cadastro disponível na aplicação. Novos usuários podem se registrar diretamente pela interface.
+
 ## Documentação
 
 - [Requisitos](./docs/requirements.md)
